@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gred Murid</title>
+  <style>
+    body {
+      background-color: #EDE8DC;
+      font-family: "Calibri", sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+    img {
+      width: 150px;
+      margin-bottom: 15px;
+    }
+    h2 {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+    input {
+      font-size: 18px;
+      width: 300px;
+      padding: 8px;
+      margin: 5px 0;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #D7C3F1;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      width: 80%;
+      max-width: 450px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+    .error {
+      color: red;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      font-style: italic;
+    }
+    #qrCodeCanvas {
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+    }
+    #qrCodeCanvas.visible {
+      opacity: 1;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+</head>
+<body>
+
+  <img src="sekolah.gif" alt="Lukisan Kelas" />
+  <h2>Darjah 5 Hijau</h2>
+  <div class="subtitle">Masukkan nama murid dan markah!</div>
+  <div class="subtitle" style="font-style: italic;">(asingkan dengan koma)</div>
+
+  <h3><div>
+    <label for="names">Nama Murid:</label><br/>
+    <input type="text" id="names" placeholder="cth: Ali, Mei, John" />
+  </div>
+  <div>
+    <h3></h3><label for="scores">Markah:</label><br/>
+    <input type="text" id="scores" placeholder="cth: 92, 75, 38" />
+  </div></3>
+
+  <button onclick="convertScores()">Tukar Markah kepada Gred</button>
+
+  <div id="result"></div>
+  <canvas id="qrCodeCanvas" style="margin-top: 20px; border: 2px dashed #BCA9D4; padding: 10px; background-color: #FAF9F6;"></canvas>
+  
+  <div id="qrCaption" style="margin-top: 8px; font-size: 14px; color: #6D597A;">...</div>
+
+  <button id="downloadQR" style="margin-top: 10px; display: none;">Muat Turun Kod QR</button>
+
+  <div style="height:40px;"></div>
+  <footer class="mt-2" style="color:gray; font-style:italic; font-size:14px;">
+    @Koleksi77
+  </footer>
+
+  <script>
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ms-MY";
+      speechSynthesis.speak(utterance);
+    }
+
+    function convertScores() {
+      const namesInput = document.getElementById("names").value.trim();
+      const scoresInput = document.getElementById("scores").value.trim();
+      const resultDiv = document.getElementById("result");
+
+      resultDiv.classList.remove("error");
+      resultDiv.textContent = "";
+
+      const names = namesInput.split(",").map(n => n.trim());
+      const scores = scoresInput.split(",").map(s => s.trim());
+
+      if (names.length !== scores.length) {
+        const msg = "Bilangan nama dan markah mestilah sama.";
+        resultDiv.textContent = msg;
+        resultDiv.classList.add("error");
+        speak(msg);
+        return;
+      }
+
+      try {
+        const gradesArray = names.map((name, i) => {
+          const score = parseInt(scores[i]);
+          if (isNaN(score)) throw new Error("Markah tidak sah");
+
+          let grade;
+          if (score >= 80) grade = "Cemerlang (A)";
+          else if (score >= 65) grade = "Baik (B)";
+          else if (score >= 50) grade = "Memuaskan (C)";
+          else if (score >= 40) grade = "Mencapai Tahap Minimum (D)";
+          else grade = "Belum Mencapai tahap minimum (E)";
+          return `${name}: ${grade}`;
+        });
+
+        const resultText = gradesArray.join("\n");
+        resultDiv.textContent = resultText;
+        speak(resultText);
+        generateQRCode(resultText);
+        speak("Ini ialah kod QR untuk keputusan murid.");
+      } catch {
+        const msg = "Input tidak sah! Sila masukkan markah berbentuk nombor.";
+        resultDiv.textContent = msg;
+        resultDiv.classList.add("error");
+        speak(msg);
+      }
+    }
+
+    function generateQRCode(text) {
+      const canvas = document.getElementById('qrCodeCanvas');
+      const caption = document.getElementById("qrCaption");
+      const downloadBtn = document.getElementById("downloadQR");
+
+      new QRious({
+        element: canvas,
+        value: text,
+        size: 200,
+        background: 'white',
+        foreground: 'black'
+      });
+
+      canvas.classList.add('visible');
+      caption.textContent = "Imbas kod QR untuk melihat keputusan.";
+
+      downloadBtn.style.display = "inline-block";
+      downloadBtn.onclick = () => {
+        const link = document.createElement("a");
+        link.download = "keputusan_murid_qr.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      };
+    }
+  </script>
+</body>
+</html>
